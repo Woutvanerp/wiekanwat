@@ -1,0 +1,195 @@
+/* Employee Profile Page Styles
+ * Uses the existing color palette:
+ * - Primary: #0000FF
+ * - Secondary: #FEEA45, #8AE1F4, #F4F4FF
+ */
+
+.profile-container {
+  min-height: 100vh;
+  background-color: #ffffff;
+}
+
+/* Header Section */
+.profile-header {
+  background-color: var(--primary);
+  color: white;
+  padding: 1.5rem 2rem;
+}
+
+.back-link {
+  color: white;
+  text-decoration: none;
+  font-size: 1rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: opacity 0.2s;
+  font-weight: 500;
+}
+
+.back-link:hover {
+  opacity: 0.8;
+}
+
+/* Main Content Area */
+.profile-main {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+.profile-card {
+  background-color: white;
+  border: 2px solid var(--primary);
+  border-radius: 8px;
+  padding: 2rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Header Section (Name, Hierarchy, Location) */
+.profile-header-section {
+  margin-bottom: 2rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 2px solid var(--secondary-lavender);
+}
+
+.profile-name-section {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+}
+
+.employee-name {
+  font-size: 2.5rem;
+  color: var(--primary);
+  margin: 0;
+  font-weight: 700;
+}
+
+.hierarchy-badge {
+  padding: 0.5rem 1rem;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  white-space: nowrap;
+  background-color: var(--secondary-lavender);
+  color: var(--primary);
+  border: 1px solid var(--primary);
+}
+
+.profile-location {
+  font-size: 1.2rem;
+  color: #666;
+  font-weight: 500;
+}
+
+/* Status Section */
+.profile-status-section {
+  margin-bottom: 2rem;
+  padding: 1rem;
+  background-color: var(--secondary-lavender);
+  border-radius: 8px;
+}
+
+.section-title {
+  font-size: 1.5rem;
+  color: var(--primary);
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 2px solid var(--secondary-lavender);
+  font-weight: 600;
+}
+
+.status-badge {
+  display: inline-block;
+  padding: 0.75rem 1.5rem;
+  border-radius: 4px;
+  font-weight: 600;
+  font-size: 1.1rem;
+  color: #333;
+}
+
+/* Skills Section */
+.profile-section {
+  margin-bottom: 2rem;
+}
+
+.profile-section:last-child {
+  margin-bottom: 0;
+}
+
+.skills-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+/* CV Summary Section */
+.cv-summary {
+  font-size: 1.05rem;
+  line-height: 1.7;
+  color: #444;
+  white-space: pre-wrap;
+}
+
+/* Loading State */
+.profile-loading {
+  text-align: center;
+  padding: 4rem 2rem;
+}
+
+.profile-loading h2 {
+  font-size: 1.5rem;
+  color: var(--primary);
+  margin-bottom: 0.5rem;
+}
+
+.profile-loading p {
+  font-size: 1rem;
+  color: #666;
+}
+
+/* Error State */
+.profile-error {
+  text-align: center;
+  padding: 4rem 2rem;
+}
+
+.profile-error h1 {
+  font-size: 2rem;
+  color: var(--primary);
+  margin-bottom: 1rem;
+}
+
+.profile-error p {
+  font-size: 1.1rem;
+  color: #666;
+  margin-bottom: 1rem;
+}
+
+.error-details {
+  font-size: 0.95rem;
+  color: #999;
+  font-style: italic;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .profile-main {
+    padding: 1rem;
+  }
+
+  .profile-card {
+    padding: 1.5rem;
+  }
+
+  .employee-name {
+    font-size: 2rem;
+  }
+
+  .profile-header {
+    padding: 1rem 1.5rem;
+  }
+}

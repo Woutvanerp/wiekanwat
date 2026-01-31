@@ -3,7 +3,7 @@
 // DELETE /api/employees/[id] - Deletes an employee by ID
 
 import { NextResponse } from 'next/server'
-import { supabase } from '../../../../utils/supabase'
+import { supabase } from '../../../../utils/supabase-server'
 
 /**
  * GET /api/employees/[id]

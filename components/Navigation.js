@@ -2,10 +2,17 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Home, Users, Building2, UserPlus, BarChart3 } from 'lucide-react'
+import { Home, Users, Building2, UserPlus, BarChart3, LogOut } from 'lucide-react'
+import { useAuth } from '../contexts/AuthContext'
 
 export default function Navigation() {
   const pathname = usePathname()
+  const { user, signOut } = useAuth()
+  
+  // Don't show navigation on login page
+  if (pathname === '/login') {
+    return null
+  }
   
   const navItems = [
     { name: 'Home', path: '/', icon: Home },
@@ -131,6 +138,39 @@ export default function Navigation() {
               </Link>
             )
           })}
+          
+          {/* Logout Button */}
+          {user && (
+            <button
+              onClick={signOut}
+              style={{
+                padding: '0.625rem 1.25rem',
+                borderRadius: '8px',
+                fontSize: '0.95rem',
+                fontWeight: 500,
+                color: '#dc2626',
+                backgroundColor: 'transparent',
+                border: '1px solid #dc2626',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                marginLeft: '0.5rem'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = '#dc2626'
+                e.currentTarget.style.color = 'white'
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = 'transparent'
+                e.currentTarget.style.color = '#dc2626'
+              }}
+            >
+              <LogOut style={{ width: '18px', height: '18px' }} />
+              <span>Uitloggen</span>
+            </button>
+          )}
         </div>
       </div>
     </nav>

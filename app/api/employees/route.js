@@ -2,7 +2,7 @@
 // POST /api/employees - Creates a new employee
 
 import { NextResponse } from 'next/server'
-import { supabase } from '../../../utils/supabase'
+import { supabase } from '../../../utils/supabase-server'
 
 /**
  * GET /api/employees

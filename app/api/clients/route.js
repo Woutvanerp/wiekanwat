@@ -2,7 +2,7 @@
 // POST /api/clients - Creates a new client
 
 import { NextResponse } from 'next/server'
-import { supabase } from '../../../utils/supabase'
+import { supabase } from '../../../utils/supabase-server'
 
 /**
  * GET /api/clients

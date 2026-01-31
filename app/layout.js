@@ -1,5 +1,7 @@
 import './globals.css'
 import Navigation from '../components/Navigation'
+import { AuthProvider } from '../contexts/AuthContext'
+import ProtectedRoute from '../components/ProtectedRoute'
 
 export const metadata = {
   title: 'Sparke & Keane - Employee Information Board',
@@ -10,8 +12,12 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <body>
-        <Navigation />
-        {children}
+        <AuthProvider>
+          <ProtectedRoute>
+            <Navigation />
+            {children}
+          </ProtectedRoute>
+        </AuthProvider>
       </body>
     </html>
   )

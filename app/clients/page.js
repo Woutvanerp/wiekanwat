@@ -13,7 +13,10 @@ import {
   Phone,
   Mail,
   Plus,
-  AlertCircle
+  AlertCircle,
+  Search,
+  Filter,
+  X
 } from 'lucide-react'
 import Toast from '../../components/Toast'
 import AddClientModal from '../../components/AddClientModal'
@@ -57,6 +60,12 @@ export default function ClientsPage() {
   const [error, setError] = useState(null)
   const [showAddModal, setShowAddModal] = useState(false)
   const [actionLoading, setActionLoading] = useState(false)
+  
+  // Filter states
+  const [searchQuery, setSearchQuery] = useState('')
+  const [selectedStatus, setSelectedStatus] = useState('Alle')
+  const [selectedIndustry, setSelectedIndustry] = useState('Alle')
+  const [showFilters, setShowFilters] = useState(false)
   
   // Toast state
   const [toast, setToast] = useState({ show: false, message: '', type: 'info' })
@@ -119,6 +128,33 @@ export default function ClientsPage() {
     }
   }
 
+  // Filter clients based on search and filters
+  const filteredClients = clients.filter(client => {
+    // Search filter
+    const matchesSearch = searchQuery === '' || 
+      client.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (client.primary_contact && client.primary_contact.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      (client.contact_email && client.contact_email.toLowerCase().includes(searchQuery.toLowerCase()))
+    
+    // Status filter
+    const matchesStatus = selectedStatus === 'Alle' || client.status === selectedStatus
+    
+    // Industry filter
+    const matchesIndustry = selectedIndustry === 'Alle' || client.industry === selectedIndustry
+    
+    return matchesSearch && matchesStatus && matchesIndustry
+  })
+
+  // Clear all filters
+  const clearFilters = () => {
+    setSearchQuery('')
+    setSelectedStatus('Alle')
+    setSelectedIndustry('Alle')
+  }
+
+  // Check if any filters are active
+  const hasActiveFilters = searchQuery !== '' || selectedStatus !== 'Alle' || selectedIndustry !== 'Alle'
+
 
   return (
     <div className="home-container">
@@ -131,63 +167,276 @@ export default function ClientsPage() {
       }}>
         <div style={{ 
           maxWidth: '1600px', 
-          margin: '0 auto',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          flexWrap: 'wrap',
-          gap: '1rem'
+          margin: '0 auto'
         }}>
-          <div>
-            <h1 style={{
-              fontSize: '2rem',
-              fontWeight: 600,
-              color: 'var(--primary)',
-              margin: 0,
-              marginBottom: '0.25rem'
-            }}>
-              Klanten
-            </h1>
-            <p style={{
-              fontSize: '1rem',
-              color: '#666',
-              margin: 0,
-              fontWeight: 300
-            }}>
-              Overzicht en beheer van alle klantrelaties
-            </p>
+          {/* Title and Add Button Row */}
+          <div style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            flexWrap: 'wrap',
+            gap: '1rem',
+            marginBottom: '1.5rem'
+          }}>
+            <div>
+              <h1 style={{
+                fontSize: '2rem',
+                fontWeight: 600,
+                color: 'var(--primary)',
+                margin: 0,
+                marginBottom: '0.25rem'
+              }}>
+                Klanten
+              </h1>
+              <p style={{
+                fontSize: '1rem',
+                color: '#666',
+                margin: 0,
+                fontWeight: 300
+              }}>
+                Overzicht en beheer van alle klantrelaties
+              </p>
+            </div>
+            
+            {/* Add Client Button */}
+            <button 
+              onClick={() => setShowAddModal(true)}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                padding: '0.75rem 1.5rem',
+                backgroundColor: 'var(--primary)',
+                color: 'white',
+                border: 'none',
+                borderRadius: '8px',
+                fontSize: '0.95rem',
+                fontWeight: 600,
+                cursor: 'pointer',
+                transition: 'all 0.2s ease',
+                boxShadow: '0 2px 8px rgba(0, 0, 255, 0.2)'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.opacity = '0.9'
+                e.currentTarget.style.transform = 'translateY(-2px)'
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.opacity = '1'
+                e.currentTarget.style.transform = 'translateY(0)'
+              }}
+            >
+              <Plus style={{ width: '20px', height: '20px' }} />
+              Nieuwe Klant
+            </button>
           </div>
-          
-          {/* Add Client Button */}
-          <button 
-            onClick={() => setShowAddModal(true)}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.5rem',
-              padding: '0.75rem 1.5rem',
-              backgroundColor: 'var(--primary)',
-              color: 'white',
-              border: 'none',
+
+          {/* Search and Filters Row */}
+          <div style={{
+            display: 'flex',
+            gap: '1rem',
+            flexWrap: 'wrap',
+            alignItems: 'center'
+          }}>
+            {/* Search Bar */}
+            <div style={{
+              flex: '1 1 300px',
+              position: 'relative'
+            }}>
+              <Search style={{
+                position: 'absolute',
+                left: '1rem',
+                top: '50%',
+                transform: 'translateY(-50%)',
+                width: '18px',
+                height: '18px',
+                color: '#999'
+              }} />
+              <input
+                type="text"
+                placeholder="Zoek op naam, contactpersoon of email..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '0.75rem 1rem 0.75rem 3rem',
+                  border: '1px solid rgba(0, 0, 0, 0.2)',
+                  borderRadius: '8px',
+                  fontSize: '0.95rem',
+                  outline: 'none',
+                  transition: 'border-color 0.2s ease'
+                }}
+                onFocus={(e) => e.currentTarget.style.borderColor = 'var(--primary)'}
+                onBlur={(e) => e.currentTarget.style.borderColor = 'rgba(0, 0, 0, 0.2)'}
+              />
+            </div>
+
+            {/* Filter Button */}
+            <button
+              onClick={() => setShowFilters(!showFilters)}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                padding: '0.75rem 1.25rem',
+                backgroundColor: showFilters ? 'var(--primary)' : 'white',
+                color: showFilters ? 'white' : 'var(--primary)',
+                border: `2px solid var(--primary)`,
+                borderRadius: '8px',
+                fontSize: '0.95rem',
+                fontWeight: 600,
+                cursor: 'pointer',
+                transition: 'all 0.2s ease',
+                position: 'relative'
+              }}
+            >
+              <Filter style={{ width: '18px', height: '18px' }} />
+              Filters
+              {hasActiveFilters && (
+                <span style={{
+                  position: 'absolute',
+                  top: '-6px',
+                  right: '-6px',
+                  width: '20px',
+                  height: '20px',
+                  borderRadius: '50%',
+                  backgroundColor: '#dc2626',
+                  color: 'white',
+                  fontSize: '0.7rem',
+                  fontWeight: 700,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}>
+                  {(selectedStatus !== 'Alle' ? 1 : 0) + (selectedIndustry !== 'Alle' ? 1 : 0)}
+                </span>
+              )}
+            </button>
+
+            {/* Clear Filters Button */}
+            {hasActiveFilters && (
+              <button
+                onClick={clearFilters}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  padding: '0.75rem 1.25rem',
+                  backgroundColor: 'transparent',
+                  color: '#666',
+                  border: '1px solid rgba(0, 0, 0, 0.2)',
+                  borderRadius: '8px',
+                  fontSize: '0.9rem',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = 'rgba(0, 0, 0, 0.05)'
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = 'transparent'
+                }}
+              >
+                <X style={{ width: '16px', height: '16px' }} />
+                Wis filters
+              </button>
+            )}
+          </div>
+
+          {/* Expandable Filter Options */}
+          {showFilters && (
+            <div style={{
+              marginTop: '1rem',
+              padding: '1.5rem',
+              backgroundColor: 'rgba(0, 0, 255, 0.02)',
+              border: '1px solid rgba(0, 0, 255, 0.1)',
               borderRadius: '8px',
-              fontSize: '0.95rem',
-              fontWeight: 600,
-              cursor: 'pointer',
-              transition: 'all 0.2s ease',
-              boxShadow: '0 2px 8px rgba(0, 0, 255, 0.2)'
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.opacity = '0.9'
-              e.currentTarget.style.transform = 'translateY(-2px)'
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.opacity = '1'
-              e.currentTarget.style.transform = 'translateY(0)'
-            }}
-          >
-            <Plus style={{ width: '20px', height: '20px' }} />
-            Nieuwe Klant
-          </button>
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+              gap: '1rem'
+            }}>
+              {/* Status Filter */}
+              <div>
+                <label style={{
+                  display: 'block',
+                  fontSize: '0.85rem',
+                  fontWeight: 600,
+                  color: '#333',
+                  marginBottom: '0.5rem'
+                }}>
+                  Status
+                </label>
+                <select
+                  value={selectedStatus}
+                  onChange={(e) => setSelectedStatus(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '0.6rem',
+                    border: '1px solid rgba(0, 0, 0, 0.2)',
+                    borderRadius: '6px',
+                    fontSize: '0.9rem',
+                    backgroundColor: 'white',
+                    cursor: 'pointer',
+                    outline: 'none'
+                  }}
+                >
+                  <option value="Alle">Alle statussen</option>
+                  <option value="Actief">Actief</option>
+                  <option value="Inactief">Inactief</option>
+                  <option value="Potentieel">Potentieel</option>
+                </select>
+              </div>
+
+              {/* Industry Filter */}
+              <div>
+                <label style={{
+                  display: 'block',
+                  fontSize: '0.85rem',
+                  fontWeight: 600,
+                  color: '#333',
+                  marginBottom: '0.5rem'
+                }}>
+                  Industrie
+                </label>
+                <select
+                  value={selectedIndustry}
+                  onChange={(e) => setSelectedIndustry(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '0.6rem',
+                    border: '1px solid rgba(0, 0, 0, 0.2)',
+                    borderRadius: '6px',
+                    fontSize: '0.9rem',
+                    backgroundColor: 'white',
+                    cursor: 'pointer',
+                    outline: 'none'
+                  }}
+                >
+                  <option value="Alle">Alle industrieën</option>
+                  <option value="Technology">Technology</option>
+                  <option value="FinTech">FinTech</option>
+                  <option value="Healthcare">Healthcare</option>
+                  <option value="Retail">Retail</option>
+                  <option value="Energy">Energy</option>
+                  <option value="Automotive">Automotive</option>
+                  <option value="Cybersecurity">Cybersecurity</option>
+                  <option value="Cloud Services">Cloud Services</option>
+                  <option value="Education">Education</option>
+                  <option value="Consulting">Consulting</option>
+                </select>
+              </div>
+            </div>
+          )}
+
+          {/* Results Count */}
+          <div style={{
+            marginTop: '1rem',
+            fontSize: '0.9rem',
+            color: '#666'
+          }}>
+            {filteredClients.length} {filteredClients.length === 1 ? 'klant' : 'klanten'} gevonden
+            {hasActiveFilters && ` (van ${clients.length} totaal)`}
+          </div>
         </div>
       </div>
 
@@ -216,13 +465,37 @@ export default function ClientsPage() {
           </div>
         )}
 
-        {!loading && !error && clients.length > 0 && (
+        {!loading && !error && clients.length > 0 && filteredClients.length === 0 && (
+          <div className="empty-state">
+            <Filter style={{ width: '64px', height: '64px', color: '#999', margin: '0 auto 1rem' }} />
+            <h2>Geen klanten gevonden</h2>
+            <p>Geen klanten gevonden met de huidige filters</p>
+            <button
+              onClick={clearFilters}
+              style={{
+                marginTop: '1rem',
+                padding: '0.75rem 1.5rem',
+                backgroundColor: 'var(--primary)',
+                color: 'white',
+                border: 'none',
+                borderRadius: '8px',
+                fontSize: '0.95rem',
+                fontWeight: 600,
+                cursor: 'pointer'
+              }}
+            >
+              Wis alle filters
+            </button>
+          </div>
+        )}
+
+        {!loading && !error && filteredClients.length > 0 && (
           <div style={{
             display: 'grid',
             gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))',
             gap: '1.5rem'
           }}>
-            {clients.map(client => (
+            {filteredClients.map(client => (
               <ClientCard key={client.id} client={client} router={router} />
             ))}
           </div>

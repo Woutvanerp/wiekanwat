@@ -7,6 +7,7 @@ import { SpeedInsights } from '@vercel/speed-insights/next'
 export const metadata = {
   title: 'Sparke & Keane - Employee Information Board',
   description: 'Internal consultancy employee tracking application',
+  // Force rebuild
 }
 
 export default function RootLayout({ children }) {

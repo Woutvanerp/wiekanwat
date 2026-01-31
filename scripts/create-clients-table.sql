@@ -38,3 +38,4 @@ WHERE current_client IS NOT NULL
   AND current_client != ''
 ON CONFLICT (name) DO NOTHING;
 
+

@@ -505,3 +505,4 @@ async function smartAssignEmployee(employeeId, clientId, projectName, startDate)
 
 All these functions work with your existing database table! 🎉
 
+

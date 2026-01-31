@@ -69,3 +69,4 @@ COMMENT ON COLUMN employee_clients.is_active IS 'Whether this assignment is curr
 COMMENT ON COLUMN employee_clients.created_at IS 'Timestamp when the assignment was created';
 COMMENT ON COLUMN employee_clients.updated_at IS 'Timestamp when the assignment was last updated';
 
+

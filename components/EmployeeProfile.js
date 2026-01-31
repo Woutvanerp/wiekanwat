@@ -1,9 +1,14 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { MapPin, ArrowLeft, Calendar, Briefcase, Building2, TrendingUp } from 'lucide-react'
+import { MapPin, ArrowLeft, Calendar, Briefcase, Building2, TrendingUp, Edit, Trash2 } from 'lucide-react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { getClientsByEmployee, getEmployeeHistory } from '../utils/employeeClientRelations'
+import { updateEmployee, deleteEmployee } from '../utils/api'
+import EditEmployeeModal from './EditEmployeeModal'
+import ConfirmationModal from './ConfirmationModal'
+import Toast from './Toast'
 
 /**
  * Employee Profile Component
@@ -15,9 +20,14 @@ import { getClientsByEmployee, getEmployeeHistory } from '../utils/employeeClien
  * - Client Timeline: Past client projects in chronological order
  */
 export default function EmployeeProfile({ employee }) {
+  const router = useRouter()
   const [activeClients, setActiveClients] = useState([])
   const [workHistory, setWorkHistory] = useState([])
   const [clientsLoading, setClientsLoading] = useState(true)
+  const [showEditModal, setShowEditModal] = useState(false)
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [actionLoading, setActionLoading] = useState(false)
+  const [toast, setToast] = useState({ show: false, message: '', type: 'success' })
 
   // Fetch active clients and work history
   useEffect(() => {
@@ -180,6 +190,63 @@ export default function EmployeeProfile({ employee }) {
     return duration
   }
 
+  // Handle edit employee submission
+  async function handleEditEmployee(updatedData) {
+    try {
+      setActionLoading(true)
+      await updateEmployee(employee.id, updatedData)
+      
+      // Show success toast and reload page
+      setShowEditModal(false)
+      setToast({
+        show: true,
+        message: `Medewerker "${updatedData.name}" is succesvol bijgewerkt!`,
+        type: 'success'
+      })
+      
+      // Reload the page to get fresh data
+      setTimeout(() => {
+        window.location.reload()
+      }, 1500)
+    } catch (err) {
+      console.error('Failed to update employee:', err)
+      setToast({
+        show: true,
+        message: `Kon medewerker niet bijwerken: ${err.message}`,
+        type: 'error'
+      })
+      setActionLoading(false)
+    }
+  }
+
+  // Handle delete employee
+  async function handleDeleteEmployee() {
+    try {
+      setActionLoading(true)
+      await deleteEmployee(employee.id)
+      
+      // Show success toast and redirect to home
+      setToast({
+        show: true,
+        message: `Medewerker "${employee.name}" is succesvol verwijderd`,
+        type: 'success'
+      })
+      
+      // Wait a moment for the toast to show, then redirect
+      setTimeout(() => {
+        router.push('/')
+      }, 1500)
+    } catch (err) {
+      console.error('Failed to delete employee:', err)
+      setToast({
+        show: true,
+        message: `Kon medewerker niet verwijderen: ${err.message}`,
+        type: 'error'
+      })
+      setActionLoading(false)
+    }
+  }
+
   return (
     <div className="profile-container" style={{ minHeight: '100vh', backgroundColor: '#fafafa' }}>
       {/* Main content - matching landing page max-width */}
@@ -193,35 +260,108 @@ export default function EmployeeProfile({ employee }) {
           marginBottom: '2rem',
           display: 'flex',
           alignItems: 'center',
+          justifyContent: 'space-between',
+          flexWrap: 'wrap',
           gap: '1rem'
         }}>
-          <Link 
-            href="/" 
-            style={{ 
-              display: 'inline-flex', 
-              alignItems: 'center', 
-              gap: '0.5rem', 
-              color: 'var(--primary)', 
-              textDecoration: 'none',
-              fontWeight: '500',
-              transition: 'opacity 0.2s',
-              fontSize: '0.95rem'
-            }}
-            onMouseEnter={(e) => e.currentTarget.style.opacity = '0.8'}
-            onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
-          >
-            <ArrowLeft style={{ width: '18px', height: '18px' }} />
-            Terug
-          </Link>
-          <h1 style={{ 
-            fontSize: '2rem', 
-            margin: 0, 
-            fontWeight: 600, 
-            color: 'var(--primary)',
-            letterSpacing: '-0.3px'
-          }}>
-            {employee.name}
-          </h1>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+            <Link 
+              href="/" 
+              style={{ 
+                display: 'inline-flex', 
+                alignItems: 'center', 
+                gap: '0.5rem', 
+                color: 'var(--primary)', 
+                textDecoration: 'none',
+                fontWeight: '500',
+                transition: 'opacity 0.2s',
+                fontSize: '0.95rem'
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.opacity = '0.8'}
+              onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
+            >
+              <ArrowLeft style={{ width: '18px', height: '18px' }} />
+              Terug
+            </Link>
+            <h1 style={{ 
+              fontSize: '2rem', 
+              margin: 0, 
+              fontWeight: 600, 
+              color: 'var(--primary)',
+              letterSpacing: '-0.3px'
+            }}>
+              {employee.name}
+            </h1>
+          </div>
+
+          {/* Action Buttons */}
+          <div style={{ display: 'flex', gap: '0.75rem' }}>
+            <button
+              onClick={() => setShowEditModal(true)}
+              disabled={actionLoading}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                padding: '0.75rem 1.25rem',
+                backgroundColor: 'white',
+                color: 'var(--primary)',
+                border: '2px solid var(--primary)',
+                borderRadius: '8px',
+                fontSize: '0.9rem',
+                fontWeight: 600,
+                cursor: actionLoading ? 'not-allowed' : 'pointer',
+                opacity: actionLoading ? 0.6 : 1,
+                transition: 'all 0.2s ease'
+              }}
+              onMouseEnter={(e) => {
+                if (!actionLoading) {
+                  e.currentTarget.style.backgroundColor = 'rgba(0, 0, 255, 0.05)'
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (!actionLoading) {
+                  e.currentTarget.style.backgroundColor = 'white'
+                }
+              }}
+            >
+              <Edit size={18} />
+              Bewerken
+            </button>
+            
+            <button
+              onClick={() => setShowDeleteConfirm(true)}
+              disabled={actionLoading}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                padding: '0.75rem 1.25rem',
+                backgroundColor: 'white',
+                color: '#dc2626',
+                border: '2px solid #dc2626',
+                borderRadius: '8px',
+                fontSize: '0.9rem',
+                fontWeight: 600,
+                cursor: actionLoading ? 'not-allowed' : 'pointer',
+                opacity: actionLoading ? 0.6 : 1,
+                transition: 'all 0.2s ease'
+              }}
+              onMouseEnter={(e) => {
+                if (!actionLoading) {
+                  e.currentTarget.style.backgroundColor = 'rgba(220, 38, 38, 0.05)'
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (!actionLoading) {
+                  e.currentTarget.style.backgroundColor = 'white'
+                }
+              }}
+            >
+              <Trash2 size={18} />
+              Verwijderen
+            </button>
+          </div>
         </div>
         {/* Profile Card - matching landing page card style */}
         <div className="location-group" style={{
@@ -530,6 +670,39 @@ export default function EmployeeProfile({ employee }) {
           </div>
         </div>
       </main>
+
+      {/* Edit Employee Modal */}
+      <EditEmployeeModal
+        isOpen={showEditModal}
+        onClose={() => setShowEditModal(false)}
+        onSubmit={handleEditEmployee}
+        loading={actionLoading}
+        employee={employee}
+      />
+
+      {/* Confirmation Modal for Deleting Employee */}
+      <ConfirmationModal
+        isOpen={showDeleteConfirm}
+        onClose={() => setShowDeleteConfirm(false)}
+        onConfirm={handleDeleteEmployee}
+        title="Medewerker Verwijderen?"
+        message={`Weet je zeker dat je medewerker "${employee.name}" permanent wilt verwijderen? Deze actie kan niet ongedaan worden gemaakt.${activeClients.length > 0 ? '\n\nLet op: Deze medewerker is momenteel toegewezen aan ' + activeClients.length + ' actieve klant(en).' : ''}`}
+        confirmText="Permanent Verwijderen"
+        cancelText="Annuleren"
+        variant="danger"
+        loading={actionLoading}
+      />
+
+      {/* Toast Notification */}
+      {toast.show && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          duration={4000}
+          onClose={() => setToast({ ...toast, show: false })}
+          isVisible={toast.show}
+        />
+      )}
     </div>
   )
 }

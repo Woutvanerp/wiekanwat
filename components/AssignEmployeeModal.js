@@ -1,13 +1,14 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { X } from 'lucide-react'
+import { X, Loader2 } from 'lucide-react'
 import { fetchEmployees } from '../utils/api'
 import {
   assignEmployeeToClient,
   updateClientEmployeeCount,
   getEmployeesByClient
 } from '../utils/employeeClientRelations'
+import Toast from './Toast'
 
 /**
  * Modal component for assigning an employee to a client
@@ -37,6 +38,9 @@ export default function AssignEmployeeModal({
   const [fetchingEmployees, setFetchingEmployees] = useState(true)
   const [errors, setErrors] = useState({})
   const [searchTerm, setSearchTerm] = useState('')
+  
+  // Toast state
+  const [toast, setToast] = useState({ show: false, message: '', type: 'success' })
 
   // Fetch available employees when modal opens
   useEffect(() => {
@@ -140,18 +144,24 @@ export default function AssignEmployeeModal({
       // Update client employee count (though this is done automatically in assignEmployeeToClient)
       await updateClientEmployeeCount(clientId)
 
-      // Show success message
+      // Show success message via Toast
       const selectedEmployee = availableEmployees.find(emp => emp.id === selectedEmployeeId)
-      showSuccessMessage(selectedEmployee?.name || 'Employee')
+      setToast({
+        show: true,
+        message: `✓ ${selectedEmployee?.name || 'Employee'} has been successfully assigned to ${clientName}!`,
+        type: 'success'
+      })
 
       // Reset form
       resetForm()
 
-      // Call success callback and close modal
-      if (onSuccess) {
-        onSuccess()
-      }
-      onClose()
+      // Call success callback and close modal after a short delay to show the toast
+      setTimeout(() => {
+        if (onSuccess) {
+          onSuccess()
+        }
+        onClose()
+      }, 1500)
 
     } catch (error) {
       console.error('Error assigning employee:', error)
@@ -161,13 +171,6 @@ export default function AssignEmployeeModal({
     } finally {
       setLoading(false)
     }
-  }
-
-  /**
-   * Show success message (simple alert, can be replaced with toast)
-   */
-  function showSuccessMessage(employeeName) {
-    alert(`✓ ${employeeName} has been successfully assigned to ${clientName}!`)
   }
 
   /**
@@ -182,14 +185,32 @@ export default function AssignEmployeeModal({
   }
 
   /**
-   * Handle modal close
+   * Handle modal close - prevents closing during loading
    */
   function handleClose() {
-    if (!loading) {
-      resetForm()
-      onClose()
+    if (loading) {
+      // Don't allow closing during loading to prevent race conditions
+      return
     }
+    resetForm()
+    onClose()
   }
+
+  /**
+   * Handle ESC key press
+   */
+  useEffect(() => {
+    function handleEscKey(event) {
+      if (event.key === 'Escape' && !loading) {
+        handleClose()
+      }
+    }
+
+    if (isOpen) {
+      document.addEventListener('keydown', handleEscKey)
+      return () => document.removeEventListener('keydown', handleEscKey)
+    }
+  }, [isOpen, loading])
 
   /**
    * Filter employees based on search term
@@ -216,9 +237,10 @@ export default function AssignEmployeeModal({
         justifyContent: 'center',
         zIndex: 1000,
         padding: '1rem',
-        animation: 'fadeIn 0.2s ease'
+        animation: 'fadeIn 0.2s ease',
+        cursor: loading ? 'not-allowed' : 'default'
       }}
-      onClick={handleClose}
+      onClick={loading ? undefined : handleClose}
     >
       <style jsx>{`
         @keyframes fadeIn {
@@ -248,7 +270,9 @@ export default function AssignEmployeeModal({
           overflow: 'auto',
           boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
           animation: 'slideIn 0.3s ease',
-          position: 'relative'
+          position: 'relative',
+          opacity: loading ? 0.95 : 1,
+          transition: 'opacity 0.2s ease'
         }}
         onClick={(e) => e.stopPropagation()}
       >
@@ -295,7 +319,8 @@ export default function AssignEmployeeModal({
               alignItems: 'center',
               justifyContent: 'center',
               transition: 'all 0.2s ease',
-              opacity: loading ? 0.5 : 1
+              opacity: loading ? 0.3 : 1,
+              pointerEvents: loading ? 'none' : 'auto'
             }}
             onMouseEnter={(e) => {
               if (!loading) {
@@ -374,6 +399,7 @@ export default function AssignEmployeeModal({
                   placeholder="Search employees..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
+                  disabled={loading || fetchingEmployees}
                   style={{
                     width: '100%',
                     padding: '0.75rem',
@@ -382,9 +408,15 @@ export default function AssignEmployeeModal({
                     fontSize: '0.95rem',
                     marginBottom: '0.75rem',
                     outline: 'none',
-                    transition: 'border-color 0.2s ease'
+                    transition: 'border-color 0.2s ease',
+                    opacity: (loading || fetchingEmployees) ? 0.6 : 1,
+                    cursor: (loading || fetchingEmployees) ? 'not-allowed' : 'text'
                   }}
-                  onFocus={(e) => e.currentTarget.style.borderColor = 'var(--primary)'}
+                  onFocus={(e) => {
+                    if (!loading && !fetchingEmployees) {
+                      e.currentTarget.style.borderColor = 'var(--primary)'
+                    }
+                  }}
                   onBlur={(e) => e.currentTarget.style.borderColor = 'rgba(0, 0, 0, 0.2)'}
                 />
 
@@ -395,6 +427,7 @@ export default function AssignEmployeeModal({
                     setSelectedEmployeeId(e.target.value)
                     setErrors({ ...errors, employee: null })
                   }}
+                  disabled={loading || fetchingEmployees}
                   required
                   style={{
                     width: '100%',
@@ -403,12 +436,13 @@ export default function AssignEmployeeModal({
                     borderRadius: '8px',
                     fontSize: '0.95rem',
                     backgroundColor: 'white',
-                    cursor: 'pointer',
+                    cursor: (loading || fetchingEmployees) ? 'not-allowed' : 'pointer',
                     outline: 'none',
-                    transition: 'border-color 0.2s ease'
+                    transition: 'border-color 0.2s ease',
+                    opacity: (loading || fetchingEmployees) ? 0.6 : 1
                   }}
                   onFocus={(e) => {
-                    if (!errors.employee) {
+                    if (!errors.employee && !loading && !fetchingEmployees) {
                       e.currentTarget.style.borderColor = 'var(--primary)'
                     }
                   }}
@@ -469,6 +503,7 @@ export default function AssignEmployeeModal({
                 setErrors({ ...errors, projectName: null })
               }}
               placeholder="e.g., Cloud Migration Project"
+              disabled={loading}
               required
               style={{
                 width: '100%',
@@ -477,10 +512,12 @@ export default function AssignEmployeeModal({
                 borderRadius: '8px',
                 fontSize: '0.95rem',
                 outline: 'none',
-                transition: 'border-color 0.2s ease'
+                transition: 'border-color 0.2s ease',
+                opacity: loading ? 0.6 : 1,
+                cursor: loading ? 'not-allowed' : 'text'
               }}
               onFocus={(e) => {
-                if (!errors.projectName) {
+                if (!errors.projectName && !loading) {
                   e.currentTarget.style.borderColor = 'var(--primary)'
                 }
               }}
@@ -521,6 +558,7 @@ export default function AssignEmployeeModal({
                 setErrors({ ...errors, startDate: null })
               }}
               max={new Date().toISOString().split('T')[0]}
+              disabled={loading}
               required
               style={{
                 width: '100%',
@@ -529,10 +567,12 @@ export default function AssignEmployeeModal({
                 borderRadius: '8px',
                 fontSize: '0.95rem',
                 outline: 'none',
-                transition: 'border-color 0.2s ease'
+                transition: 'border-color 0.2s ease',
+                opacity: loading ? 0.6 : 1,
+                cursor: loading ? 'not-allowed' : 'text'
               }}
               onFocus={(e) => {
-                if (!errors.startDate) {
+                if (!errors.startDate && !loading) {
                   e.currentTarget.style.borderColor = 'var(--primary)'
                 }
               }}
@@ -612,6 +652,10 @@ export default function AssignEmployeeModal({
               type="submit"
               disabled={loading || fetchingEmployees || availableEmployees.length === 0}
               style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '0.5rem',
                 padding: '0.75rem 1.5rem',
                 backgroundColor: 'var(--primary)',
                 color: 'white',
@@ -621,7 +665,8 @@ export default function AssignEmployeeModal({
                 fontWeight: 600,
                 cursor: (loading || fetchingEmployees || availableEmployees.length === 0) ? 'not-allowed' : 'pointer',
                 opacity: (loading || fetchingEmployees || availableEmployees.length === 0) ? 0.6 : 1,
-                transition: 'all 0.2s ease'
+                transition: 'all 0.2s ease',
+                minWidth: '150px'
               }}
               onMouseEnter={(e) => {
                 if (!loading && !fetchingEmployees && availableEmployees.length > 0) {
@@ -634,11 +679,36 @@ export default function AssignEmployeeModal({
                 }
               }}
             >
+              {loading && (
+                <Loader2 
+                  size={16} 
+                  style={{ 
+                    animation: 'spin 1s linear infinite'
+                  }} 
+                />
+              )}
+              <style jsx>{`
+                @keyframes spin {
+                  from { transform: rotate(0deg); }
+                  to { transform: rotate(360deg); }
+                }
+              `}</style>
               {loading ? 'Assigning...' : 'Assign to Client'}
             </button>
           </div>
         </form>
       </div>
+
+      {/* Toast Notification */}
+      {toast.show && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          duration={4000}
+          onClose={() => setToast({ ...toast, show: false })}
+          isVisible={toast.show}
+        />
+      )}
     </div>
   )
 }

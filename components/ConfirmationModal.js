@@ -1,6 +1,7 @@
 'use client'
 
-import { AlertCircle, X } from 'lucide-react'
+import { AlertCircle, X, Loader2 } from 'lucide-react'
+import { useEffect } from 'react'
 
 /**
  * Reusable confirmation modal component
@@ -60,13 +61,28 @@ export default function ConfirmationModal({
   }
 
   /**
-   * Handle close
+   * Handle close - prevents closing during loading
    */
   function handleClose() {
-    if (!loading) {
-      onClose()
-    }
+    if (loading) return // Prevent closing during operation
+    onClose()
   }
+
+  /**
+   * Handle ESC key press
+   */
+  useEffect(() => {
+    function handleEscKey(event) {
+      if (event.key === 'Escape' && !loading) {
+        handleClose()
+      }
+    }
+
+    if (isOpen) {
+      document.addEventListener('keydown', handleEscKey)
+      return () => document.removeEventListener('keydown', handleEscKey)
+    }
+  }, [isOpen, loading])
 
   // Don't render if not open
   if (!isOpen) return null
@@ -85,9 +101,10 @@ export default function ConfirmationModal({
         justifyContent: 'center',
         zIndex: 1000,
         padding: '1rem',
-        animation: 'fadeIn 0.2s ease'
+        animation: 'fadeIn 0.2s ease',
+        cursor: loading ? 'not-allowed' : 'default'
       }}
-      onClick={handleClose}
+      onClick={loading ? undefined : handleClose}
     >
       <style jsx>{`
         @keyframes fadeIn {
@@ -115,7 +132,9 @@ export default function ConfirmationModal({
           width: '100%',
           boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
           animation: 'scaleIn 0.2s ease',
-          position: 'relative'
+          position: 'relative',
+          opacity: loading ? 0.95 : 1,
+          transition: 'opacity 0.2s ease'
         }}
         onClick={(e) => e.stopPropagation()}
       >
@@ -139,7 +158,8 @@ export default function ConfirmationModal({
             alignItems: 'center',
             justifyContent: 'center',
             transition: 'all 0.2s ease',
-            opacity: loading ? 0.5 : 1
+            opacity: loading ? 0.3 : 1,
+            pointerEvents: loading ? 'none' : 'auto'
           }}
           onMouseEnter={(e) => {
             if (!loading) {
@@ -230,6 +250,10 @@ export default function ConfirmationModal({
             onClick={handleConfirm}
             disabled={loading}
             style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '0.5rem',
               padding: '0.75rem 1.5rem',
               backgroundColor: currentVariant.confirmBg,
               color: 'white',
@@ -240,7 +264,7 @@ export default function ConfirmationModal({
               cursor: loading ? 'not-allowed' : 'pointer',
               opacity: loading ? 0.6 : 1,
               transition: 'all 0.2s ease',
-              minWidth: '120px'
+              minWidth: '140px'
             }}
             onMouseEnter={(e) => {
               if (!loading) e.currentTarget.style.backgroundColor = currentVariant.confirmHoverBg
@@ -249,6 +273,20 @@ export default function ConfirmationModal({
               if (!loading) e.currentTarget.style.backgroundColor = currentVariant.confirmBg
             }}
           >
+            {loading && (
+              <Loader2 
+                size={16} 
+                style={{ 
+                  animation: 'spin 1s linear infinite'
+                }} 
+              />
+            )}
+            <style jsx>{`
+              @keyframes spin {
+                from { transform: rotate(0deg); }
+                to { transform: rotate(360deg); }
+              }
+            `}</style>
             {loading ? 'Processing...' : confirmText}
           </button>
         </div>

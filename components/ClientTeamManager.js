@@ -12,7 +12,9 @@ import {
   removeEmployeeFromClient
 } from '../utils/employeeClientRelations'
 import { fetchEmployees } from '../utils/api'
-import { Users, Plus, X, Calendar, Briefcase, AlertCircle } from 'lucide-react'
+import { Users, Plus, X, Calendar, Briefcase, AlertCircle, Loader2 } from 'lucide-react'
+import Toast from './Toast'
+import ConfirmationModal from './ConfirmationModal'
 
 export default function ClientTeamManager({ clientId, clientName }) {
   const [assignedEmployees, setAssignedEmployees] = useState([])
@@ -21,6 +23,13 @@ export default function ClientTeamManager({ clientId, clientName }) {
   const [error, setError] = useState(null)
   const [showAddModal, setShowAddModal] = useState(false)
   const [actionLoading, setActionLoading] = useState(false)
+  
+  // Toast state
+  const [toast, setToast] = useState({ show: false, message: '', type: 'success' })
+  
+  // Confirmation modal state
+  const [showConfirmModal, setShowConfirmModal] = useState(false)
+  const [employeeToRemove, setEmployeeToRemove] = useState(null)
 
   // Load data
   useEffect(() => {
@@ -67,31 +76,62 @@ export default function ClientTeamManager({ clientId, clientName }) {
       // Reload data
       await loadData()
       setShowAddModal(false)
-      alert('Employee successfully assigned!')
+      
+      // Show success toast
+      const employee = availableEmployees.find(emp => emp.id === employeeId)
+      setToast({
+        show: true,
+        message: `✓ ${employee?.name || 'Employee'} successfully assigned to ${clientName}!`,
+        type: 'success'
+      })
     } catch (err) {
       console.error('Error assigning employee:', err)
-      alert(`Failed to assign employee: ${err.message}`)
+      setToast({
+        show: true,
+        message: `Failed to assign employee: ${err.message}`,
+        type: 'error'
+      })
     } finally {
       setActionLoading(false)
     }
   }
 
-  // Remove employee from client
-  async function handleRemoveEmployee(employeeId, employeeName) {
-    if (!confirm(`Remove ${employeeName} from ${clientName}?`)) return
+  // Open confirmation modal for removing employee
+  function confirmRemoveEmployee(employeeId, employeeName) {
+    setEmployeeToRemove({ id: employeeId, name: employeeName })
+    setShowConfirmModal(true)
+  }
+
+  // Remove employee from client (called after confirmation)
+  async function handleRemoveEmployee() {
+    if (!employeeToRemove) return
 
     try {
       setActionLoading(true)
-      const { error } = await removeEmployeeFromClient(employeeId, clientId)
+      const { error } = await removeEmployeeFromClient(employeeToRemove.id, clientId)
 
       if (error) throw error
 
       // Reload data
       await loadData()
-      alert('Employee successfully removed!')
+      
+      // Show success toast
+      setToast({
+        show: true,
+        message: `✓ ${employeeToRemove.name} successfully removed from ${clientName}!`,
+        type: 'success'
+      })
+      
+      // Close modal and reset
+      setShowConfirmModal(false)
+      setEmployeeToRemove(null)
     } catch (err) {
       console.error('Error removing employee:', err)
-      alert(`Failed to remove employee: ${err.message}`)
+      setToast({
+        show: true,
+        message: `Failed to remove employee: ${err.message}`,
+        type: 'error'
+      })
     } finally {
       setActionLoading(false)
     }
@@ -187,7 +227,7 @@ export default function ClientTeamManager({ clientId, clientName }) {
             <TeamMemberCard
               key={employee.id}
               employee={employee}
-              onRemove={() => handleRemoveEmployee(employee.id, employee.name)}
+              onRemove={() => confirmRemoveEmployee(employee.id, employee.name)}
               disabled={actionLoading}
             />
           ))}
@@ -201,6 +241,33 @@ export default function ClientTeamManager({ clientId, clientName }) {
           onAssign={handleAssignEmployee}
           onClose={() => setShowAddModal(false)}
           loading={actionLoading}
+        />
+      )}
+
+      {/* Confirmation Modal for Removing Employee */}
+      <ConfirmationModal
+        isOpen={showConfirmModal}
+        onClose={() => {
+          setShowConfirmModal(false)
+          setEmployeeToRemove(null)
+        }}
+        onConfirm={handleRemoveEmployee}
+        title="Remove Employee?"
+        message={`Are you sure you want to remove ${employeeToRemove?.name || 'this employee'} from ${clientName}? This will mark the assignment as inactive.`}
+        confirmText="Remove"
+        cancelText="Cancel"
+        variant="danger"
+        loading={actionLoading}
+      />
+
+      {/* Toast Notification */}
+      {toast.show && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          duration={4000}
+          onClose={() => setToast({ ...toast, show: false })}
+          isVisible={toast.show}
         />
       )}
     </div>
@@ -315,35 +382,61 @@ function AddEmployeeModal({ availableEmployees, onAssign, onClose, loading }) {
   function handleSubmit(e) {
     e.preventDefault()
     if (!selectedEmployeeId) {
-      alert('Please select an employee')
+      // Show error via setting an error state instead of alert
       return
     }
     onAssign(selectedEmployeeId, projectName, startDate)
   }
 
+  // Prevent closing during loading
+  function handleClose() {
+    if (loading) return
+    onClose()
+  }
+
+  // Handle ESC key
+  useEffect(() => {
+    function handleEscKey(event) {
+      if (event.key === 'Escape' && !loading) {
+        handleClose()
+      }
+    }
+    document.addEventListener('keydown', handleEscKey)
+    return () => document.removeEventListener('keydown', handleEscKey)
+  }, [loading])
+
   return (
-    <div style={{
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      backgroundColor: 'rgba(0, 0, 0, 0.5)',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      zIndex: 1000,
-      padding: '1rem'
-    }}>
-      <div style={{
-        backgroundColor: 'white',
-        borderRadius: '12px',
-        padding: '2rem',
-        maxWidth: '500px',
-        width: '100%',
-        maxHeight: '90vh',
-        overflow: 'auto'
-      }}>
+    <div 
+      style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 1000,
+        padding: '1rem',
+        cursor: loading ? 'not-allowed' : 'default'
+      }}
+      onClick={loading ? undefined : handleClose}
+    >
+      <div 
+        style={{
+          backgroundColor: 'white',
+          borderRadius: '12px',
+          padding: '2rem',
+          maxWidth: '500px',
+          width: '100%',
+          maxHeight: '90vh',
+          overflow: 'auto',
+          opacity: loading ? 0.95 : 1,
+          transition: 'opacity 0.2s ease'
+        }}
+        onClick={(e) => e.stopPropagation()}
+      >
         <h3 style={{
           fontSize: '1.5rem',
           fontWeight: 600,
@@ -369,13 +462,16 @@ function AddEmployeeModal({ availableEmployees, onAssign, onClose, loading }) {
             <select
               value={selectedEmployeeId}
               onChange={(e) => setSelectedEmployeeId(e.target.value)}
+              disabled={loading}
               required
               style={{
                 width: '100%',
                 padding: '0.75rem',
                 border: '1px solid rgba(0, 0, 0, 0.2)',
                 borderRadius: '8px',
-                fontSize: '1rem'
+                fontSize: '1rem',
+                cursor: loading ? 'not-allowed' : 'pointer',
+                opacity: loading ? 0.6 : 1
               }}
             >
               <option value="">Choose an employee...</option>
@@ -403,12 +499,15 @@ function AddEmployeeModal({ availableEmployees, onAssign, onClose, loading }) {
               value={projectName}
               onChange={(e) => setProjectName(e.target.value)}
               placeholder="e.g., Cloud Migration Project"
+              disabled={loading}
               style={{
                 width: '100%',
                 padding: '0.75rem',
                 border: '1px solid rgba(0, 0, 0, 0.2)',
                 borderRadius: '8px',
-                fontSize: '1rem'
+                fontSize: '1rem',
+                cursor: loading ? 'not-allowed' : 'text',
+                opacity: loading ? 0.6 : 1
               }}
             />
           </div>
@@ -428,13 +527,16 @@ function AddEmployeeModal({ availableEmployees, onAssign, onClose, loading }) {
               type="date"
               value={startDate}
               onChange={(e) => setStartDate(e.target.value)}
+              disabled={loading}
               required
               style={{
                 width: '100%',
                 padding: '0.75rem',
                 border: '1px solid rgba(0, 0, 0, 0.2)',
                 borderRadius: '8px',
-                fontSize: '1rem'
+                fontSize: '1rem',
+                cursor: loading ? 'not-allowed' : 'text',
+                opacity: loading ? 0.6 : 1
               }}
             />
           </div>
@@ -447,7 +549,7 @@ function AddEmployeeModal({ availableEmployees, onAssign, onClose, loading }) {
           }}>
             <button
               type="button"
-              onClick={onClose}
+              onClick={handleClose}
               disabled={loading}
               style={{
                 padding: '0.75rem 1.5rem',
@@ -458,7 +560,14 @@ function AddEmployeeModal({ availableEmployees, onAssign, onClose, loading }) {
                 fontSize: '0.95rem',
                 fontWeight: 600,
                 cursor: loading ? 'not-allowed' : 'pointer',
-                opacity: loading ? 0.6 : 1
+                opacity: loading ? 0.6 : 1,
+                transition: 'all 0.2s ease'
+              }}
+              onMouseEnter={(e) => {
+                if (!loading) e.currentTarget.style.backgroundColor = '#e5e7eb'
+              }}
+              onMouseLeave={(e) => {
+                if (!loading) e.currentTarget.style.backgroundColor = '#f3f4f6'
               }}
             >
               Cancel
@@ -467,6 +576,10 @@ function AddEmployeeModal({ availableEmployees, onAssign, onClose, loading }) {
               type="submit"
               disabled={loading}
               style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '0.5rem',
                 padding: '0.75rem 1.5rem',
                 backgroundColor: 'var(--primary)',
                 color: 'white',
@@ -475,9 +588,31 @@ function AddEmployeeModal({ availableEmployees, onAssign, onClose, loading }) {
                 fontSize: '0.95rem',
                 fontWeight: 600,
                 cursor: loading ? 'not-allowed' : 'pointer',
-                opacity: loading ? 0.6 : 1
+                opacity: loading ? 0.6 : 1,
+                transition: 'all 0.2s ease',
+                minWidth: '130px'
+              }}
+              onMouseEnter={(e) => {
+                if (!loading) e.currentTarget.style.opacity = '0.9'
+              }}
+              onMouseLeave={(e) => {
+                if (!loading) e.currentTarget.style.opacity = '1'
               }}
             >
+              {loading && (
+                <Loader2 
+                  size={16} 
+                  style={{ 
+                    animation: 'spin 1s linear infinite'
+                  }} 
+                />
+              )}
+              <style jsx>{`
+                @keyframes spin {
+                  from { transform: rotate(0deg); }
+                  to { transform: rotate(360deg); }
+                }
+              `}</style>
               {loading ? 'Adding...' : 'Add to Team'}
             </button>
           </div>

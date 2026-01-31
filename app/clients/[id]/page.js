@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { fetchClientById, fetchEmployees } from '../../../utils/api'
+import { fetchClientById, fetchEmployees, updateClient, deleteClient } from '../../../utils/api'
 import { 
   getEmployeesByClient, 
   assignEmployeeToClient, 
@@ -21,11 +21,14 @@ import {
   ArrowLeft,
   AlertCircle,
   Plus,
-  X
+  X,
+  Edit,
+  Trash2
 } from 'lucide-react'
 import Tag from '../../../components/Tag'
 import ConfirmationModal from '../../../components/ConfirmationModal'
 import Toast from '../../../components/Toast'
+import EditClientModal from '../../../components/EditClientModal'
 import '../../home.css'
 
 // Status configurations
@@ -138,6 +141,8 @@ export default function ClientDetailPage() {
   const [showAssignModal, setShowAssignModal] = useState(false)
   const [availableEmployees, setAvailableEmployees] = useState([])
   const [actionLoading, setActionLoading] = useState(false)
+  const [showEditModal, setShowEditModal] = useState(false)
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   
   // Confirmation modal state
   const [showConfirmModal, setShowConfirmModal] = useState(false)
@@ -269,6 +274,62 @@ export default function ClientDetailPage() {
     }
   }
 
+  // Handle edit client submission
+  async function handleEditClient(updatedData) {
+    try {
+      setActionLoading(true)
+      await updateClient(client.id, updatedData)
+      
+      // Reload client data
+      await loadData()
+      
+      // Close modal and show success toast
+      setShowEditModal(false)
+      setToast({
+        show: true,
+        message: `Klant "${updatedData.name}" is succesvol bijgewerkt!`,
+        type: 'success'
+      })
+    } catch (err) {
+      console.error('Failed to update client:', err)
+      setToast({
+        show: true,
+        message: `Kon klant niet bijwerken: ${err.message}`,
+        type: 'error'
+      })
+    } finally {
+      setActionLoading(false)
+    }
+  }
+
+  // Handle delete client
+  async function handleDeleteClient() {
+    try {
+      setActionLoading(true)
+      await deleteClient(client.id)
+      
+      // Show success toast and redirect to clients list
+      setToast({
+        show: true,
+        message: `Klant "${client.name}" is succesvol verwijderd`,
+        type: 'success'
+      })
+      
+      // Wait a moment for the toast to show, then redirect
+      setTimeout(() => {
+        router.push('/clients')
+      }, 1500)
+    } catch (err) {
+      console.error('Failed to delete client:', err)
+      setToast({
+        show: true,
+        message: `Kon klant niet verwijderen: ${err.message}`,
+        type: 'error'
+      })
+      setActionLoading(false)
+    }
+  }
+
   if (loading) {
     return (
       <div className="home-container">
@@ -361,92 +422,164 @@ export default function ClientDetailPage() {
             display: 'flex',
             alignItems: 'flex-start',
             gap: '2rem',
-            flexWrap: 'wrap'
+            flexWrap: 'wrap',
+            justifyContent: 'space-between'
           }}>
-            {/* Company Logo */}
-            <div style={{
-              width: '120px',
-              height: '120px',
-              borderRadius: '12px',
-              background: 'linear-gradient(135deg, var(--secondary-lavender) 0%, #e8e8ff 100%)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              border: '1px solid rgba(0, 0, 0, 0.08)',
-              flexShrink: 0
-            }}>
-              {client.logo ? (
-                <img 
-                  src={client.logo} 
-                  alt={client.name} 
-                  style={{ maxHeight: '80px', maxWidth: '80%', objectFit: 'contain' }} 
-                />
-              ) : (
-                <Building2 size={50} style={{ color: industryColor }} />
-              )}
-            </div>
-
-            {/* Company Info */}
-            <div style={{ flex: 1, minWidth: '300px' }}>
-              <h1 style={{
-                fontSize: '2.5rem',
-                fontWeight: 600,
-                color: 'var(--primary)',
-                margin: 0,
-                marginBottom: '0.75rem'
+            <div style={{ display: 'flex', alignItems: 'flex-start', gap: '2rem', flex: 1, minWidth: '300px' }}>
+              {/* Company Logo */}
+              <div style={{
+                width: '120px',
+                height: '120px',
+                borderRadius: '12px',
+                background: 'linear-gradient(135deg, var(--secondary-lavender) 0%, #e8e8ff 100%)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                border: '1px solid rgba(0, 0, 0, 0.08)',
+                flexShrink: 0
               }}>
-                {client.name}
-              </h1>
-
-              {/* Badges */}
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem', marginBottom: '1rem' }}>
-                <span style={{
-                  display: 'inline-block',
-                  padding: '0.5rem 1rem',
-                  borderRadius: '12px',
-                  fontSize: '0.9rem',
-                  fontWeight: 600,
-                  backgroundColor: `${industryColor}15`,
-                  color: industryColor,
-                  border: `1px solid ${industryColor}30`
-                }}>
-                  {client.industry}
-                </span>
-                <span style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '0.5rem',
-                  padding: '0.5rem 1rem',
-                  borderRadius: '12px',
-                  fontSize: '0.9rem',
-                  fontWeight: 600,
-                  backgroundColor: statusStyle.bgColor,
-                  color: statusStyle.color,
-                  border: `1px solid ${statusStyle.color}30`
-                }}>
-                  <span style={{
-                    width: '8px',
-                    height: '8px',
-                    borderRadius: '50%',
-                    backgroundColor: statusStyle.color
-                  }}></span>
-                  {client.status}
-                </span>
+                {client.logo ? (
+                  <img 
+                    src={client.logo} 
+                    alt={client.name} 
+                    style={{ maxHeight: '80px', maxWidth: '80%', objectFit: 'contain' }} 
+                  />
+                ) : (
+                  <Building2 size={50} style={{ color: industryColor }} />
+                )}
               </div>
 
-              {/* Location */}
-              {client.location && (
-                <div style={{
+              {/* Company Info */}
+              <div style={{ flex: 1, minWidth: '300px' }}>
+                <h1 style={{
+                  fontSize: '2.5rem',
+                  fontWeight: 600,
+                  color: 'var(--primary)',
+                  margin: 0,
+                  marginBottom: '0.75rem'
+                }}>
+                  {client.name}
+                </h1>
+
+                {/* Badges */}
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem', marginBottom: '1rem' }}>
+                  <span style={{
+                    display: 'inline-block',
+                    padding: '0.5rem 1rem',
+                    borderRadius: '12px',
+                    fontSize: '0.9rem',
+                    fontWeight: 600,
+                    backgroundColor: `${industryColor}15`,
+                    color: industryColor,
+                    border: `1px solid ${industryColor}30`
+                  }}>
+                    {client.industry}
+                  </span>
+                  <span style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.5rem',
+                    padding: '0.5rem 1rem',
+                    borderRadius: '12px',
+                    fontSize: '0.9rem',
+                    fontWeight: 600,
+                    backgroundColor: statusStyle.bgColor,
+                    color: statusStyle.color,
+                    border: `1px solid ${statusStyle.color}30`
+                  }}>
+                    <span style={{
+                      width: '8px',
+                      height: '8px',
+                      borderRadius: '50%',
+                      backgroundColor: statusStyle.color
+                    }}></span>
+                    {client.status}
+                  </span>
+                </div>
+
+                {/* Location */}
+                {client.location && (
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.5rem',
+                    color: '#666',
+                    fontSize: '1rem'
+                  }}>
+                    <MapPin size={18} style={{ color: 'var(--primary)' }} />
+                    <span>{client.location}</span>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div style={{ display: 'flex', gap: '0.75rem', flexShrink: 0 }}>
+              <button
+                onClick={() => setShowEditModal(true)}
+                disabled={actionLoading}
+                style={{
                   display: 'flex',
                   alignItems: 'center',
                   gap: '0.5rem',
-                  color: '#666',
-                  fontSize: '1rem'
-                }}>
-                  <MapPin size={18} style={{ color: 'var(--primary)' }} />
-                  <span>{client.location}</span>
-                </div>
-              )}
+                  padding: '0.75rem 1.25rem',
+                  backgroundColor: 'white',
+                  color: 'var(--primary)',
+                  border: '2px solid var(--primary)',
+                  borderRadius: '8px',
+                  fontSize: '0.9rem',
+                  fontWeight: 600,
+                  cursor: actionLoading ? 'not-allowed' : 'pointer',
+                  opacity: actionLoading ? 0.6 : 1,
+                  transition: 'all 0.2s ease'
+                }}
+                onMouseEnter={(e) => {
+                  if (!actionLoading) {
+                    e.currentTarget.style.backgroundColor = 'rgba(0, 0, 255, 0.05)'
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (!actionLoading) {
+                    e.currentTarget.style.backgroundColor = 'white'
+                  }
+                }}
+              >
+                <Edit size={18} />
+                Bewerken
+              </button>
+              
+              <button
+                onClick={() => setShowDeleteConfirm(true)}
+                disabled={actionLoading}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  padding: '0.75rem 1.25rem',
+                  backgroundColor: 'white',
+                  color: '#dc2626',
+                  border: '2px solid #dc2626',
+                  borderRadius: '8px',
+                  fontSize: '0.9rem',
+                  fontWeight: 600,
+                  cursor: actionLoading ? 'not-allowed' : 'pointer',
+                  opacity: actionLoading ? 0.6 : 1,
+                  transition: 'all 0.2s ease'
+                }}
+                onMouseEnter={(e) => {
+                  if (!actionLoading) {
+                    e.currentTarget.style.backgroundColor = 'rgba(220, 38, 38, 0.05)'
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (!actionLoading) {
+                    e.currentTarget.style.backgroundColor = 'white'
+                  }
+                }}
+              >
+                <Trash2 size={18} />
+                Verwijderen
+              </button>
             </div>
           </div>
         </div>
@@ -903,6 +1036,15 @@ export default function ClientDetailPage() {
           />
         )}
 
+        {/* Edit Client Modal */}
+        <EditClientModal
+          isOpen={showEditModal}
+          onClose={() => setShowEditModal(false)}
+          onSubmit={handleEditClient}
+          loading={actionLoading}
+          client={client}
+        />
+
         {/* Confirmation Modal for Removing Employee */}
         <ConfirmationModal
           isOpen={showConfirmModal}
@@ -914,6 +1056,19 @@ export default function ClientDetailPage() {
           title="Medewerker Verwijderen?"
           message={`Weet je zeker dat je ${employeeToRemove?.name || 'deze medewerker'} wilt verwijderen van ${client.name}? Dit zal de toewijzing als inactief markeren.`}
           confirmText="Verwijderen"
+          cancelText="Annuleren"
+          variant="danger"
+          loading={actionLoading}
+        />
+
+        {/* Confirmation Modal for Deleting Client */}
+        <ConfirmationModal
+          isOpen={showDeleteConfirm}
+          onClose={() => setShowDeleteConfirm(false)}
+          onConfirm={handleDeleteClient}
+          title="Klant Verwijderen?"
+          message={`Weet je zeker dat je klant "${client.name}" permanent wilt verwijderen? Deze actie kan niet ongedaan worden gemaakt.${employees.length > 0 ? '\n\nLet op: Deze klant heeft momenteel ' + employees.length + ' toegewezen medewerker(s).' : ''}`}
+          confirmText="Permanent Verwijderen"
           cancelText="Annuleren"
           variant="danger"
           loading={actionLoading}
@@ -1147,13 +1302,15 @@ function AssignEmployeeModal({ availableEmployees, onAssign, onClose, loading })
   const [selectedEmployeeId, setSelectedEmployeeId] = useState('')
   const [projectName, setProjectName] = useState('')
   const [startDate, setStartDate] = useState(new Date().toISOString().split('T')[0])
+  const [validationError, setValidationError] = useState('')
 
   function handleSubmit(e) {
     e.preventDefault()
     if (!selectedEmployeeId) {
-      alert('Selecteer alstublieft een medewerker')
+      setValidationError('Selecteer alstublieft een medewerker')
       return
     }
+    setValidationError('')
     onAssign(selectedEmployeeId, projectName, startDate)
   }
 
@@ -1198,6 +1355,21 @@ function AssignEmployeeModal({ availableEmployees, onAssign, onClose, loading })
         </h3>
 
         <form onSubmit={handleSubmit}>
+          {/* Validation Error */}
+          {validationError && (
+            <div style={{
+              padding: '0.75rem',
+              backgroundColor: 'rgba(220, 38, 38, 0.1)',
+              border: '1px solid rgba(220, 38, 38, 0.3)',
+              borderRadius: '8px',
+              color: '#dc2626',
+              fontSize: '0.9rem',
+              marginBottom: '1rem'
+            }}>
+              {validationError}
+            </div>
+          )}
+
           {/* Employee Selection */}
           <div style={{ marginBottom: '1.5rem' }}>
             <label style={{
@@ -1211,7 +1383,10 @@ function AssignEmployeeModal({ availableEmployees, onAssign, onClose, loading })
             </label>
             <select
               value={selectedEmployeeId}
-              onChange={(e) => setSelectedEmployeeId(e.target.value)}
+              onChange={(e) => {
+                setSelectedEmployeeId(e.target.value)
+                setValidationError('') // Clear error when user selects
+              }}
               required
               style={{
                 width: '100%',

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { fetchClients } from '../../utils/api'
+import { fetchClients, createClient } from '../../utils/api'
 import { 
   Building2, 
   Users, 
@@ -14,6 +14,8 @@ import {
   Plus,
   AlertCircle
 } from 'lucide-react'
+import Toast from '../../components/Toast'
+import AddClientModal from '../../components/AddClientModal'
 import '../home.css'
 
 // Status configurations
@@ -52,6 +54,11 @@ export default function ClientsPage() {
   const [clients, setClients] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const [showAddModal, setShowAddModal] = useState(false)
+  const [actionLoading, setActionLoading] = useState(false)
+  
+  // Toast state
+  const [toast, setToast] = useState({ show: false, message: '', type: 'info' })
 
   useEffect(() => {
     async function loadData() {
@@ -81,6 +88,35 @@ export default function ClientsPage() {
     
     loadData()
   }, [])
+
+  // Handle add client submission
+  async function handleAddClient(clientData) {
+    try {
+      setActionLoading(true)
+      await createClient(clientData)
+      
+      // Reload clients list
+      const clientsData = await fetchClients()
+      setClients(clientsData)
+      
+      // Close modal and show success toast
+      setShowAddModal(false)
+      setToast({
+        show: true,
+        message: `Klant "${clientData.name}" is succesvol toegevoegd!`,
+        type: 'success'
+      })
+    } catch (err) {
+      console.error('Failed to create client:', err)
+      setToast({
+        show: true,
+        message: `Kon klant niet toevoegen: ${err.message}`,
+        type: 'error'
+      })
+    } finally {
+      setActionLoading(false)
+    }
+  }
 
 
   return (
@@ -123,7 +159,7 @@ export default function ClientsPage() {
           
           {/* Add Client Button */}
           <button 
-            onClick={() => alert('Add Client functionality - connect to your form')}
+            onClick={() => setShowAddModal(true)}
             style={{
               display: 'flex',
               alignItems: 'center',
@@ -191,6 +227,25 @@ export default function ClientsPage() {
           </div>
         )}
       </main>
+
+      {/* Add Client Modal */}
+      <AddClientModal
+        isOpen={showAddModal}
+        onClose={() => setShowAddModal(false)}
+        onSubmit={handleAddClient}
+        loading={actionLoading}
+      />
+
+      {/* Toast Notification */}
+      {toast.show && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          duration={4000}
+          onClose={() => setToast({ ...toast, show: false })}
+          isVisible={toast.show}
+        />
+      )}
     </div>
   )
 }

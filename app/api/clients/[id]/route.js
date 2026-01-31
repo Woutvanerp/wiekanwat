@@ -52,27 +52,63 @@ export async function PUT(request, { params }) {
   try {
     const { id } = params
     const body = await request.json()
-    const { name, description, requested_positions } = body
 
     // Prepare update data (only include fields that were provided)
     const updateData = {}
     
-    if (name !== undefined) {
-      updateData.name = name.trim()
+    // Handle all possible client fields
+    if (body.name !== undefined) {
+      updateData.name = body.name.trim()
     }
     
-    if (description !== undefined) {
-      updateData.description = description.trim()
+    if (body.description !== undefined) {
+      updateData.description = body.description.trim()
     }
     
-    if (requested_positions !== undefined) {
-      if (!Array.isArray(requested_positions)) {
+    if (body.logo !== undefined) {
+      updateData.logo = body.logo.trim()
+    }
+    
+    if (body.industry !== undefined) {
+      updateData.industry = body.industry
+    }
+    
+    if (body.status !== undefined) {
+      updateData.status = body.status
+    }
+    
+    if (body.primary_contact !== undefined) {
+      updateData.primary_contact = body.primary_contact.trim()
+    }
+    
+    if (body.contact_email !== undefined) {
+      updateData.contact_email = body.contact_email.trim()
+    }
+    
+    if (body.contact_phone !== undefined) {
+      updateData.contact_phone = body.contact_phone.trim()
+    }
+    
+    if (body.contract_start !== undefined) {
+      updateData.contract_start = body.contract_start
+    }
+    
+    if (body.contract_duration !== undefined) {
+      updateData.contract_duration = body.contract_duration.trim()
+    }
+    
+    if (body.annual_value !== undefined) {
+      updateData.annual_value = body.annual_value.trim()
+    }
+    
+    if (body.requested_positions !== undefined) {
+      if (!Array.isArray(body.requested_positions)) {
         return NextResponse.json(
           { error: 'Validation error', details: 'requested_positions must be an array' },
           { status: 400 }
         )
       }
-      updateData.requested_positions = requested_positions
+      updateData.requested_positions = body.requested_positions
     }
 
     updateData.updated_at = new Date().toISOString()

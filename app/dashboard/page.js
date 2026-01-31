@@ -48,8 +48,7 @@ const DEFAULT_WIDGETS = {
   industryChart: true,
   utilizationTimeline: true,
   topClients: true,
-  recentActivity: true,
-  quickStats: true
+  recentActivity: true
 }
 
 // Date range options
@@ -86,12 +85,6 @@ export default function DashboardPage() {
   const [industryData, setIndustryData] = useState([])
   const [utilizationData, setUtilizationData] = useState([])
   const [topClientsData, setTopClientsData] = useState([])
-  const [quickStats, setQuickStats] = useState({
-    avgEmployeesPerClient: 0,
-    mostCommonSkill: '-',
-    busiestMonth: '-',
-    totalContractValue: 0
-  })
   const [recentActivity, setRecentActivity] = useState([])
   
   // Feature states
@@ -191,7 +184,6 @@ export default function DashboardPage() {
       calculateIndustryDistribution(clients)
       calculateUtilizationTrend(relationships)
       calculateTopClients(clients, relationships)
-      calculateQuickStats(employees, clients, relationships)
       setRecentActivity(relationships.slice(0, 5))
 
       setLastUpdated(new Date())
@@ -350,67 +342,6 @@ export default function DashboardPage() {
       .slice(0, 5)
 
     setTopClientsData(topClients)
-  }
-
-  function calculateQuickStats(employees, clients, relationships) {
-    // Average employees per client (only active clients)
-    const activeClients = clients.filter(c => c.status === 'Actief')
-    const activeClientIds = new Set(activeClients.map(c => c.id))
-    
-    // Count only active relationships that belong to active clients
-    const activeRelationships = relationships.filter(r => 
-      r.is_active && activeClientIds.has(r.client_id)
-    )
-    
-    const avgEmployeesPerClient = activeClients.length > 0 
-      ? (activeRelationships.length / activeClients.length).toFixed(1)
-      : 0
-    
-    // Get employee IDs that are assigned to active clients
-    const activeEmployeeIds = new Set(activeRelationships.map(r => r.employee_id))
-    const activeEmployees = employees.filter(emp => activeEmployeeIds.has(emp.id))
-    
-    // Most common skill (only from employees assigned to active clients)
-    const skillCount = {}
-    activeEmployees.forEach(emp => {
-      if (emp.skills && Array.isArray(emp.skills)) {
-        emp.skills.forEach(skill => {
-          skillCount[skill] = (skillCount[skill] || 0) + 1
-        })
-      }
-    })
-    const mostCommonSkill = Object.entries(skillCount).length > 0
-      ? Object.entries(skillCount).sort((a, b) => b[1] - a[1])[0][0]
-      : '-'
-
-    // Busiest month for assignments (only for active clients)
-    const monthCount = {}
-    activeRelationships.forEach(r => {
-      if (r.start_date) {
-        const date = new Date(r.start_date)
-        const monthYear = date.toLocaleDateString('nl-NL', { month: 'long', year: 'numeric' })
-        monthCount[monthYear] = (monthCount[monthYear] || 0) + 1
-      }
-    })
-    const busiestMonth = Object.entries(monthCount).length > 0
-      ? Object.entries(monthCount).sort((a, b) => b[1] - a[1])[0][0]
-      : '-'
-
-    // Total contract value (only active clients)
-    const totalContractValue = clients
-      .filter(c => c.status === 'Actief')
-      .reduce((sum, c) => {
-        // Parse the annual_value, removing any non-numeric characters
-        const value = String(c.annual_value || '0').replace(/[^\d]/g, '')
-        return sum + (parseFloat(value) || 0)
-      }, 0)
-
-    setQuickStats({
-      avgEmployeesPerClient,
-      mostCommonSkill,
-      busiestMonth,
-      totalContractValue
-    })
   }
 
   // Calculate percentage change for comparison
@@ -868,52 +799,6 @@ export default function DashboardPage() {
             gap: '1.5rem',
             marginBottom: '2rem'
           }}>
-            {/* Quick Stats */}
-            {visibleWidgets.quickStats && (
-              <div className="widget-fade-in" style={{
-                backgroundColor: 'white',
-                borderRadius: '12px',
-                padding: '1.5rem',
-                boxShadow: '0 2px 8px rgba(0, 0, 0, 0.08)',
-                border: '1px solid rgba(0, 0, 255, 0.1)'
-              }}>
-                <h3 style={{
-                  fontSize: '1.25rem',
-                  fontWeight: 600,
-                  color: 'var(--primary)',
-                  marginBottom: '1.5rem',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.5rem'
-                }}>
-                  <Activity style={{ width: '20px', height: '20px' }} />
-                  Snelle Statistieken
-                </h3>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-                  <StatRow
-                    icon={Briefcase}
-                    label="Gem. medewerkers per klant"
-                    value={quickStats.avgEmployeesPerClient}
-                  />
-                  <StatRow
-                    icon={Award}
-                    label="Meest voorkomende skill"
-                    value={quickStats.mostCommonSkill}
-                  />
-                  <StatRow
-                    icon={Calendar}
-                    label="Drukste maand"
-                    value={quickStats.busiestMonth}
-                  />
-                  <StatRow
-                    icon={DollarSign}
-                    label="Totale contractwaarde"
-                    value={formatCurrency(quickStats.totalContractValue)}
-                  />
-                </div>
-              </div>
-            )}
-
             {/* Recent Activity */}
             {visibleWidgets.recentActivity && (
               <div className="widget-fade-in" style={{
@@ -1249,7 +1134,6 @@ function CustomizeModal({ visibleWidgets, toggleWidget, resetWidgets, onClose })
     { key: 'industryChart', label: 'Branche Grafiek' },
     { key: 'utilizationTimeline', label: 'Bezetting Tijdlijn' },
     { key: 'topClients', label: 'Top Klanten' },
-    { key: 'quickStats', label: 'Snelle Statistieken' },
     { key: 'recentActivity', label: 'Recente Activiteit' }
   ]
 

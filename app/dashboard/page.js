@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
+import { formatCurrency } from '../../utils/formatters'
 import { 
   Users, 
   Building2, 
@@ -385,7 +386,11 @@ export default function DashboardPage() {
     // Total contract value
     const totalContractValue = clients
       .filter(c => c.status === 'Active')
-      .reduce((sum, c) => sum + (parseFloat(c.annual_value) || 0), 0)
+      .reduce((sum, c) => {
+        // Parse the annual_value, removing any non-numeric characters
+        const value = String(c.annual_value || '0').replace(/[^\d]/g, '')
+        return sum + (parseFloat(value) || 0)
+      }, 0)
 
     setQuickStats({
       avgEmployeesPerClient,
@@ -890,7 +895,7 @@ export default function DashboardPage() {
                   <StatRow
                     icon={DollarSign}
                     label="Totale contractwaarde"
-                    value={`€${quickStats.totalContractValue.toLocaleString('nl-NL')}`}
+                    value={formatCurrency(quickStats.totalContractValue)}
                   />
                 </div>
               </div>

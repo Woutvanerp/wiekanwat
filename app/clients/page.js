@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { fetchClients, createClient } from '../../utils/api'
+import { formatCurrency } from '../../utils/formatters'
 import { 
   Building2, 
   Users, 
@@ -418,7 +419,7 @@ function ClientCard({ client, router }) {
             <DollarSign style={{ color: 'var(--primary)', minWidth: '18px', marginTop: '2px' }} size={18} />
             <div>
               <div style={{ fontSize: '0.9rem', fontWeight: 600, color: '#333' }}>
-                {client.annual_value || 'N/A'}
+                {formatCurrency(client.annual_value)}
               </div>
               <div style={{ fontSize: '0.75rem', color: '#666' }}>Jaarwaarde</div>
             </div>

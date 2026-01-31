@@ -239,7 +239,7 @@ export default function DashboardPage() {
           .map(r => r.employee_id)
       )
       const prevAvailableEmployees = employees.length - prevActiveEmployeeIds.size
-      const prevActiveClients = (prevClients || []).filter(c => c.status === 'Active').length
+      const prevActiveClients = (prevClients || []).filter(c => c.status === 'Actief').length
 
       setPreviousMetrics({
         totalEmployees: employees.length,
@@ -262,7 +262,7 @@ export default function DashboardPage() {
     )
     const availableEmployees = totalEmployees - activeEmployeeIds.size
     const totalClients = clients.length
-    const activeClients = clients.filter(c => c.status === 'Active').length
+    const activeClients = clients.filter(c => c.status === 'Actief').length
 
     setMetrics({
       totalEmployees,
@@ -353,10 +353,11 @@ export default function DashboardPage() {
   }
 
   function calculateQuickStats(employees, clients, relationships) {
-    // Average employees per client
+    // Average employees per client (only active clients)
+    const activeClients = clients.filter(c => c.status === 'Actief')
     const activeRelationships = relationships.filter(r => r.is_active)
-    const avgEmployeesPerClient = clients.length > 0 
-      ? (activeRelationships.length / clients.length).toFixed(1)
+    const avgEmployeesPerClient = activeClients.length > 0 
+      ? (activeRelationships.length / activeClients.length).toFixed(1)
       : 0
 
     // Most common skill
@@ -383,9 +384,9 @@ export default function DashboardPage() {
       ? Object.entries(monthCount).sort((a, b) => b[1] - a[1])[0][0]
       : '-'
 
-    // Total contract value
+    // Total contract value (only active clients)
     const totalContractValue = clients
-      .filter(c => c.status === 'Active')
+      .filter(c => c.status === 'Actief')
       .reduce((sum, c) => {
         // Parse the annual_value, removing any non-numeric characters
         const value = String(c.annual_value || '0').replace(/[^\d]/g, '')

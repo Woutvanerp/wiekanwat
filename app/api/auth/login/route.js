@@ -3,7 +3,7 @@
 // GET /api/auth/user - Get current user
 
 import { NextResponse } from 'next/server'
-import { supabase } from '../../../utils/supabase-server'
+import { supabase } from '../../../../utils/supabase-server'
 
 /**
  * POST /api/auth/login

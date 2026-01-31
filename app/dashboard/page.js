@@ -355,10 +355,26 @@ export default function DashboardPage() {
   function calculateQuickStats(employees, clients, relationships) {
     // Average employees per client (only active clients)
     const activeClients = clients.filter(c => c.status === 'Actief')
-    const activeRelationships = relationships.filter(r => r.is_active)
+    const activeClientIds = new Set(activeClients.map(c => c.id))
+    
+    // Count only active relationships that belong to active clients
+    const activeRelationships = relationships.filter(r => 
+      r.is_active && activeClientIds.has(r.client_id)
+    )
+    
     const avgEmployeesPerClient = activeClients.length > 0 
       ? (activeRelationships.length / activeClients.length).toFixed(1)
       : 0
+    
+    // Debug logging
+    console.log('Dashboard stats calculation:', {
+      totalClients: clients.length,
+      activeClients: activeClients.length,
+      activeClientStatuses: activeClients.map(c => ({ name: c.name, status: c.status })),
+      totalRelationships: relationships.length,
+      activeRelationships: activeRelationships.length,
+      avgEmployeesPerClient
+    })
 
     // Most common skill
     const skillCount = {}

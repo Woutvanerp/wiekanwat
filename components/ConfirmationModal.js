@@ -274,19 +274,15 @@ export default function ConfirmationModal({
             }}
           >
             {loading && (
-              <Loader2 
-                size={16} 
-                style={{ 
-                  animation: 'spin 1s linear infinite'
-                }} 
-              />
+              <div style={{
+                width: '16px',
+                height: '16px',
+                border: '2px solid rgba(255,255,255,0.3)',
+                borderTopColor: 'white',
+                borderRadius: '50%',
+                animation: 'spin 1s linear infinite'
+              }} />
             )}
-            <style jsx>{`
-              @keyframes spin {
-                from { transform: rotate(0deg); }
-                to { transform: rotate(360deg); }
-              }
-            `}</style>
             {loading ? 'Processing...' : confirmText}
           </button>
         </div>

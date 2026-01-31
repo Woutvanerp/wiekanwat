@@ -3,7 +3,7 @@
  * Uses the employee_clients junction table in Supabase
  */
 
-import { supabase } from './supabase'
+import { supabase } from './supabase-client'
 
 /**
  * Get all active employees assigned to a specific client

@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { Users, Building2, BarChart3, ArrowRight, TrendingUp, Filter, Users2 } from 'lucide-react'
+import { Users, Building2, BarChart3, ArrowRight, TrendingUp, Filter, Users2, LayoutDashboard } from 'lucide-react'
 
 export default function Home() {
   return (
@@ -64,7 +64,7 @@ export default function Home() {
               flexWrap: 'wrap'
             }}>
               <Link
-                href="/organizational-structure"
+                href="/dashboard"
                 style={{
                   backgroundColor: 'white',
                   color: 'var(--primary)',
@@ -86,6 +86,36 @@ export default function Home() {
                 onMouseLeave={(e) => {
                   e.currentTarget.style.transform = 'translateY(0)'
                   e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)'
+                }}
+              >
+                <LayoutDashboard style={{ width: '20px', height: '20px' }} />
+                Dashboard
+                <ArrowRight style={{ width: '18px', height: '18px' }} />
+              </Link>
+              <Link
+                href="/organizational-structure"
+                style={{
+                  backgroundColor: 'rgba(255,255,255,0.15)',
+                  color: 'white',
+                  padding: '0.875rem 2rem',
+                  borderRadius: '8px',
+                  textDecoration: 'none',
+                  fontWeight: 600,
+                  fontSize: '1rem',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  transition: 'all 0.2s ease',
+                  border: '2px solid rgba(255,255,255,0.3)',
+                  backdropFilter: 'blur(10px)'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.25)'
+                  e.currentTarget.style.transform = 'translateY(-2px)'
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.15)'
+                  e.currentTarget.style.transform = 'translateY(0)'
                 }}
               >
                 <BarChart3 style={{ width: '20px', height: '20px' }} />
@@ -143,6 +173,88 @@ export default function Home() {
           position: 'relative',
           zIndex: 2
         }}>
+          {/* Dashboard Card */}
+          <Link
+            href="/dashboard"
+            style={{
+              backgroundColor: 'white',
+              borderRadius: '16px',
+              padding: '2.5rem',
+              boxShadow: '0 4px 20px rgba(0, 0, 0, 0.08)',
+              border: '1px solid rgba(0, 0, 255, 0.1)',
+              textDecoration: 'none',
+              color: 'inherit',
+              transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+              display: 'flex',
+              flexDirection: 'column',
+              position: 'relative',
+              overflow: 'hidden'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.transform = 'translateY(-8px)'
+              e.currentTarget.style.boxShadow = '0 12px 40px rgba(0, 0, 255, 0.15)'
+              e.currentTarget.style.borderColor = 'rgba(0, 0, 255, 0.3)'
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = 'translateY(0)'
+              e.currentTarget.style.boxShadow = '0 4px 20px rgba(0, 0, 0, 0.08)'
+              e.currentTarget.style.borderColor = 'rgba(0, 0, 255, 0.1)'
+            }}
+          >
+            {/* Accent Bar */}
+            <div style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              height: '4px',
+              background: 'linear-gradient(90deg, #0050ff, #00a3ff)'
+            }}></div>
+            
+            <div style={{
+              width: '64px',
+              height: '64px',
+              borderRadius: '12px',
+              background: 'linear-gradient(135deg, #0050ff, #00a3ff)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              marginBottom: '1.5rem',
+              boxShadow: '0 4px 12px rgba(0, 80, 255, 0.3)'
+            }}>
+              <LayoutDashboard style={{ width: '32px', height: '32px', color: 'white' }} />
+            </div>
+            <h2 style={{
+              fontSize: '1.5rem',
+              fontWeight: 600,
+              color: 'var(--primary)',
+              marginBottom: '0.75rem',
+              marginTop: '0'
+            }}>
+              Dashboard
+            </h2>
+            <p style={{
+              color: '#666',
+              lineHeight: '1.7',
+              fontSize: '1rem',
+              marginBottom: '1.5rem',
+              flex: 1
+            }}>
+              Bekijk analytics, statistieken en belangrijke bedrijfsinzichten in één overzicht.
+            </p>
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              color: 'var(--primary)',
+              fontWeight: 600,
+              fontSize: '0.9rem',
+              marginTop: 'auto'
+            }}>
+              Bekijk dashboard
+              <ArrowRight style={{ width: '16px', height: '16px', marginLeft: '0.5rem' }} />
+            </div>
+          </Link>
+
           {/* Organizational Structure Card */}
           <Link
             href="/organizational-structure"

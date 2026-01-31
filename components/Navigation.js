@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Home, Users, Building2, UserPlus, BarChart3, LogOut } from 'lucide-react'
+import { Home, Users, Building2, UserPlus, BarChart3, LogOut, LayoutDashboard } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 
 export default function Navigation() {
@@ -16,6 +16,7 @@ export default function Navigation() {
   
   const navItems = [
     { name: 'Home', path: '/', icon: Home },
+    { name: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
     { name: 'Personen', path: '/organizational-chart', icon: Users },
     { name: 'Organisatiestructuur', path: '/organizational-structure', icon: BarChart3 },
     { name: 'Klanten', path: '/clients', icon: Building2 },

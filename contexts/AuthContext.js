@@ -9,6 +9,7 @@ const AuthContext = createContext({})
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [initialCheckDone, setInitialCheckDone] = useState(false)
   const router = useRouter()
 
   useEffect(() => {
@@ -21,6 +22,7 @@ export const AuthProvider = ({ children }) => {
         console.error('Error checking user:', error)
       } finally {
         setLoading(false)
+        setInitialCheckDone(true)
       }
     }
 
@@ -29,9 +31,12 @@ export const AuthProvider = ({ children }) => {
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
+        console.log('Auth state changed:', event, 'User:', session?.user?.email)
         setUser(session?.user ?? null)
+        setLoading(false)
         
-        if (event === 'SIGNED_IN') {
+        // Only redirect on explicit sign in/out events, not on token refresh
+        if (event === 'SIGNED_IN' && !initialCheckDone) {
           router.push('/')
         } else if (event === 'SIGNED_OUT') {
           router.push('/login')
@@ -39,10 +44,34 @@ export const AuthProvider = ({ children }) => {
       }
     )
 
+    // Handle visibility change - refresh session when user returns to tab
+    const handleVisibilityChange = async () => {
+      if (document.visibilityState === 'visible') {
+        console.log('Tab became visible, checking session...')
+        try {
+          const { data: { session }, error } = await supabase.auth.getSession()
+          if (error) {
+            console.error('Error refreshing session:', error)
+          }
+          if (session?.user) {
+            console.log('Session still valid for:', session.user.email)
+            setUser(session.user)
+          } else {
+            console.log('No valid session found')
+          }
+        } catch (error) {
+          console.error('Error checking session on visibility change:', error)
+        }
+      }
+    }
+
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+
     return () => {
       subscription.unsubscribe()
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
     }
-  }, [router])
+  }, [router, initialCheckDone])
 
   const signOut = async () => {
     try {

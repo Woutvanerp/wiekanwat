@@ -37,6 +37,15 @@ export default function EditClientModal({ isOpen, onClose, onSubmit, loading, cl
   // Populate form with client data when modal opens
   useEffect(() => {
     if (client && isOpen) {
+      // Format annual_value if it exists and doesn't already have euro sign
+      let formattedAnnualValue = client.annual_value || ''
+      if (formattedAnnualValue && !formattedAnnualValue.includes('€')) {
+        const numericValue = formattedAnnualValue.replace(/[^\d]/g, '')
+        if (numericValue) {
+          formattedAnnualValue = '€' + parseInt(numericValue, 10).toLocaleString('nl-NL')
+        }
+      }
+      
       setFormData({
         name: client.name || '',
         description: client.description || '',
@@ -48,14 +57,30 @@ export default function EditClientModal({ isOpen, onClose, onSubmit, loading, cl
         contact_phone: client.contact_phone || '',
         contract_start: client.contract_start || '',
         contract_duration: client.contract_duration || '',
-        annual_value: client.annual_value || ''
+        annual_value: formattedAnnualValue
       })
     }
   }, [client, isOpen])
 
   const handleChange = (e) => {
     const { name, value } = e.target
-    setFormData(prev => ({ ...prev, [name]: value }))
+    
+    // Special handling for annual_value to format with euro sign and thousands separator
+    if (name === 'annual_value') {
+      // Remove all non-numeric characters except for the first character if it's €
+      const numericValue = value.replace(/[^\d]/g, '')
+      
+      // Format with thousands separator (dots) and euro sign
+      if (numericValue) {
+        const formatted = '€' + parseInt(numericValue, 10).toLocaleString('nl-NL')
+        setFormData(prev => ({ ...prev, [name]: formatted }))
+      } else {
+        setFormData(prev => ({ ...prev, [name]: '' }))
+      }
+    } else {
+      setFormData(prev => ({ ...prev, [name]: value }))
+    }
+    
     setValidationError('') // Clear error when user types
   }
 
@@ -545,7 +570,7 @@ export default function EditClientModal({ isOpen, onClose, onSubmit, loading, cl
                 name="annual_value"
                 value={formData.annual_value}
                 onChange={handleChange}
-                placeholder="bijv. €450,000"
+                placeholder="bijv. €450.000"
                 disabled={loading}
                 style={{
                   width: '100%',

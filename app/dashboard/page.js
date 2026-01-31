@@ -366,19 +366,13 @@ export default function DashboardPage() {
       ? (activeRelationships.length / activeClients.length).toFixed(1)
       : 0
     
-    // Debug logging
-    console.log('Dashboard stats calculation:', {
-      totalClients: clients.length,
-      activeClients: activeClients.length,
-      activeClientStatuses: activeClients.map(c => ({ name: c.name, status: c.status })),
-      totalRelationships: relationships.length,
-      activeRelationships: activeRelationships.length,
-      avgEmployeesPerClient
-    })
-
-    // Most common skill
+    // Get employee IDs that are assigned to active clients
+    const activeEmployeeIds = new Set(activeRelationships.map(r => r.employee_id))
+    const activeEmployees = employees.filter(emp => activeEmployeeIds.has(emp.id))
+    
+    // Most common skill (only from employees assigned to active clients)
     const skillCount = {}
-    employees.forEach(emp => {
+    activeEmployees.forEach(emp => {
       if (emp.skills && Array.isArray(emp.skills)) {
         emp.skills.forEach(skill => {
           skillCount[skill] = (skillCount[skill] || 0) + 1
@@ -389,12 +383,14 @@ export default function DashboardPage() {
       ? Object.entries(skillCount).sort((a, b) => b[1] - a[1])[0][0]
       : '-'
 
-    // Busiest month for assignments
+    // Busiest month for assignments (only for active clients)
     const monthCount = {}
-    relationships.forEach(r => {
-      const date = new Date(r.start_date)
-      const monthYear = date.toLocaleDateString('nl-NL', { month: 'long', year: 'numeric' })
-      monthCount[monthYear] = (monthCount[monthYear] || 0) + 1
+    activeRelationships.forEach(r => {
+      if (r.start_date) {
+        const date = new Date(r.start_date)
+        const monthYear = date.toLocaleDateString('nl-NL', { month: 'long', year: 'numeric' })
+        monthCount[monthYear] = (monthCount[monthYear] || 0) + 1
+      }
     })
     const busiestMonth = Object.entries(monthCount).length > 0
       ? Object.entries(monthCount).sort((a, b) => b[1] - a[1])[0][0]

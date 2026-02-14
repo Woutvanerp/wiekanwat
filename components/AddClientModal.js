@@ -38,7 +38,23 @@ export default function AddClientModal({ isOpen, onClose, onSubmit, loading }) {
 
   const handleChange = (e) => {
     const { name, value } = e.target
-    setFormData(prev => ({ ...prev, [name]: value }))
+    
+    // Special handling for annual_value to format with euro sign and thousands separator
+    if (name === 'annual_value') {
+      // Remove all non-numeric characters except for the first character if it's €
+      const numericValue = value.replace(/[^\d]/g, '')
+      
+      // Format with thousands separator (dots) and euro sign
+      if (numericValue) {
+        const formatted = '€' + parseInt(numericValue, 10).toLocaleString('nl-NL')
+        setFormData(prev => ({ ...prev, [name]: formatted }))
+      } else {
+        setFormData(prev => ({ ...prev, [name]: '' }))
+      }
+    } else {
+      setFormData(prev => ({ ...prev, [name]: value }))
+    }
+    
     setValidationError('') // Clear error when user types
   }
 
@@ -543,7 +559,7 @@ export default function AddClientModal({ isOpen, onClose, onSubmit, loading }) {
                 name="annual_value"
                 value={formData.annual_value}
                 onChange={handleChange}
-                placeholder="bijv. €450,000"
+                placeholder="bijv. €450.000"
                 disabled={loading}
                 style={{
                   width: '100%',

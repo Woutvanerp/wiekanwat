@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { fetchClientById, fetchEmployees, updateClient, deleteClient } from '../../../utils/api'
+import { formatCurrency } from '../../../utils/formatters'
 import { 
   getEmployeesByClient, 
   assignEmployeeToClient, 
@@ -1017,7 +1018,7 @@ export default function ClientDetailPage() {
                       fontWeight: 600,
                       color: '#333'
                     }}>
-                      {client.annual_value}
+                      {formatCurrency(client.annual_value)}
                     </div>
                   </div>
                 )}
